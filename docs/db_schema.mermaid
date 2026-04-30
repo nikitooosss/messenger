@@ -1,0 +1,39 @@
+erDiagram
+    u }|--|{ m : ""
+    u }|--|{ cp : ""
+    c }|--|{ cp : ""
+    c ||--|{ m : "" 
+
+    u[User]{
+        int id PK
+        string uniq_name
+        string name
+        string password_hash
+        string avatar_url
+        boolean is_active "default False"
+        timestamp created_at
+        timestamp last_seen
+    }
+
+    cp[ChatParticipants]{
+        int id PK
+        int chat_id FK
+        int user_id FK
+        string role
+        timestamp joined_at
+    }
+
+    c[Chat]{
+        int id PK
+        string name
+        boolean is_group "default False"
+        timestamp created_at
+    }
+
+    m[Message]{
+        int id PK
+        int chat_id FK
+        int user_id FK
+        string content
+        timestamp created_at
+    }

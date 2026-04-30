@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic.main import BaseModel
 
+from api.database.models import UserRole
+
 
 class ChatParticipantGet(BaseModel):
     id: int
@@ -16,11 +18,11 @@ class ChatParticipantGet(BaseModel):
 class ChatParticipantPost(BaseModel):
     chat_id: int
     user_id: int
-    role: Enum
+    role: UserRole
 
 
 class ChatParticipantPatch(BaseModel):
-    role: Optional[Enum] = None
+    role: Optional[UserRole] = None
 
     class Config:
         from_attributes = True

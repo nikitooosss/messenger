@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import ChatParticipant, get_db
+from api.database.models import UserRole
 from api.schemas import ChatParticipantGet, ChatParticipantPatch, ChatParticipantPost
 
 router_chat_participant = APIRouter(
@@ -50,6 +51,7 @@ async def get_participant_by_id(
 async def create_participant(
     db: Annotated[AsyncSession, Depends(get_db)],
     chat_participant_data: ChatParticipantPost,
+    role: UserRole,
 ):
     stmt = select(ChatParticipant).where(
         ChatParticipant.user_id == chat_participant_data.user_id,
@@ -62,6 +64,7 @@ async def create_participant(
         raise HTTPException(status_code=409, detail="User already in chat")
 
     participant = ChatParticipant(**chat_participant_data.model_dump())
+    participant.role = role
 
     db.add(participant)
     await db.commit()

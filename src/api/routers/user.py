@@ -56,7 +56,7 @@ async def create_user(
             status_code=409, detail="A user with that name already exists"
         )
 
-    user = User(**user_data.model_dump())
+    user = User(**user_data.model_dump(exclude_unset=True))
 
     db.add(user)
     await db.commit()

@@ -8,6 +8,7 @@ class UserGet(BaseModel):
     id: int
     uniq_name: str
     name: Optional[str] = None
+    password_hash: str
     is_active: bool
     avatar_url: Optional[str] = None
     created_at: datetime

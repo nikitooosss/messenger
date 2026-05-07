@@ -14,3 +14,7 @@ POSTGRES_DB_NAME: Final[str] = os.getenv("POSTGRES_DB_NAME", "postgres")
 POSTGRES_DSN: Final[str] = (
     f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB_NAME}"
 )
+
+SECRET_KEY: Final[str] = os.getenv("SECRET_KEY", "secret_key")
+ALGORITHM: Final[str] = os.getenv("ALGORITHM", "algorythm")
+ACCESS_TOKEN_EXPIRE_MINUTES: Final[int] = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 1))

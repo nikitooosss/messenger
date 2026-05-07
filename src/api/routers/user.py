@@ -7,11 +7,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import User, get_db
 from api.schemas import UserGet, UserPatch, UserPost
+from api.core import get_current_user 
 
 router_user = APIRouter(
     prefix="/user",
     tags=["User"],
 )
+
+@router_user.get("/me")
+async def read_users_me(
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    return current_user
 
 
 @router_user.get("/get", response_model=list[UserGet])

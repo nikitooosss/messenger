@@ -7,16 +7,16 @@ from pydantic.main import BaseModel
 class UserGet(BaseModel):
     id: int
     uniq_name: str
-    name: str
+    name: Optional[str] = None
     is_active: bool
-    avatar_url: str | None = None
+    avatar_url: Optional[str] = None
     created_at: datetime
     last_seen: datetime
 
 
 class UserPost(BaseModel):
     uniq_name: str
-    name: str
+    name: Optional[str] = None
     password_hash: str
 
 

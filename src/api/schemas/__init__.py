@@ -1,3 +1,4 @@
+from .auth import UserRegister
 from .chat import (
     ChatGet,
     ChatPatch,

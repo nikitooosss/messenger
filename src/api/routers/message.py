@@ -2,11 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
-from sqlalchemy import select, update
+from fastapi.responses import Response
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.core import get_message_service
 from api.database import Message, get_db
 from api.schemas import MessageGet, MessagePatch, MessagePost
+from api.services import MessageService
 
 router_message = APIRouter(
     prefix="/message",
@@ -15,82 +18,48 @@ router_message = APIRouter(
 
 
 @router_message.get("/get", response_model=list[MessageGet])
-async def get_all_messages(
-    db: Annotated[AsyncSession, Depends(get_db)],
+async def get_limit_chat_messages(
+    service: Annotated[MessageService, Depends(get_message_service)],
+    limit: int,
+    chat_id: int
 ):
-    stmt = select(Message)
-    result = await db.execute(stmt)
-    messages = result.scalars().all()
-
+    messages = await service.get_chat_messages(limit=limit, chat_id=chat_id)
     return messages
 
 
 @router_message.get("/get/{message_id}", response_model=MessageGet)
 async def get_message_by_id(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    service: Annotated[MessageService, Depends(get_message_service)],
     message_id: int,
 ):
-    stmt = select(Message).where(Message.id == message_id)
-    result = await db.execute(stmt)
-    message_orm = result.scalar_one_or_none()
-
-    if message_orm is None:
-        raise HTTPException(status_code=404, detail="Message not found")
-
-    message = MessageGet.model_validate(message_orm, from_attributes=True)
-
+    message = await service.get_message_by_id(message_id=message_id)
     return message
 
 
 @router_message.post("/create", response_model=MessagePost)
 async def create_message(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    service: Annotated[MessageService, Depends(get_message_service)],
     message_data: MessagePost,
 ):
-    message = Message(**message_data.model_dump())
-
-    db.add(message)
-    await db.commit()
-    await db.refresh(message)
-
+    message = await service.create_message(message_data=message_data)
     return message
 
 
 @router_message.patch("/{message_id}", response_model=MessagePatch)
 async def update_message(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    service: Annotated[MessageService, Depends(get_message_service)],
     message_id: int,
     message_data: MessagePatch,
 ):
-    stmt = select(Message).where(Message.id == message_id)
-    result = await db.execute(stmt)
-    message = result.scalar_one_or_none()
-
-    if message is None:
-        raise HTTPException(status_code=404, detail="Message not found")
-
-    update_data = message_data.model_dump(exclude_unset=True)
-
-    for field, value in update_data.items():
-        setattr(message, field, value)
-
-    await db.commit()
-    await db.refresh(message)
-
+    message = await service.change_message(message_id=message_id, message_data=message_data)
     return message
 
 
 @router_message.delete("/{message_id}", status_code=204)
 async def delete_message(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    service: Annotated[MessageService, Depends(get_message_service)],
     message_id: int,
 ):
-    stmt = select(Message).where(Message.id == message_id)
-    result = await db.execute(stmt)
-    chat = result.scalar_one_or_none()
+    await service.delete_message(message_id=message_id)
 
-    if chat is None:
-        raise HTTPException(status_code=404, detail="Message not found")
-
-    await db.delete(chat)
-    await db.commit()
+    return Response(status_code=204) 

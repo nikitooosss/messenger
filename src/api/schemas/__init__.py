@@ -19,3 +19,19 @@ from .user import (
     UserPatch,
     UserPost,
 )
+
+__all__ = [
+    "UserRegister",
+    "ChatGet",
+    "ChatPatch",
+    "ChatPost",
+    "ChatParticipantGet",
+    "ChatParticipantPatch",
+    "ChatParticipantPost",
+    "MessageGet",
+    "MessagePatch",
+    "MessagePost",
+    "UserGet",
+    "UserPatch",
+    "UserPost",
+]

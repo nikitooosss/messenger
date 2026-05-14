@@ -1,12 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Response
 from fastapi.params import Depends
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.database import Chat, get_db
+from api.core import get_chat_service
 from api.schemas import ChatGet, ChatPatch, ChatPost
+from api.services import ChatService
 
 router_chat = APIRouter(
     prefix="/chat",
@@ -15,81 +14,46 @@ router_chat = APIRouter(
 
 
 @router_chat.get("/get", response_model=list[ChatGet])
-async def get_all_chats(
-    db: Annotated[AsyncSession, Depends(get_db)],
+async def get_all_user_chats(
+    service: Annotated[ChatService, Depends(get_chat_service)],
+    user_id: int,
 ):
-    stmt = select(Chat)
-    result = await db.execute(stmt)
-    chats = result.scalars().all()
+    chats = await service.get_all_user_chats(user_id=user_id)
     return chats
 
 
 @router_chat.get("/get/{chat_id}", response_model=ChatGet)
 async def get_chat_by_id(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    service: Annotated[ChatService, Depends(get_chat_service)],
     chat_id: int,
 ):
-    stmt = select(Chat).where(Chat.id == chat_id)
-    result = await db.execute(stmt)
-    chat_orm = result.scalar_one_or_none()
-
-    if chat_orm is None:
-        raise HTTPException(status_code=404, detail="Chat not found")
-
-    chat = ChatGet.model_validate(chat_orm, from_attributes=True)
-
+    chat = await service.get_chat_by_id(chat_id=chat_id)
     return chat
 
 
 @router_chat.post("/create", response_model=ChatPost)
 async def create_chat(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    service: Annotated[ChatService, Depends(get_chat_service)],
     chat_data: ChatPost,
 ):
-    chat = Chat(**chat_data.model_dump())
-
-    db.add(chat)
-    await db.commit()
-    await db.refresh(chat)
-
+    chat = await service.create_chat(chat_data=chat_data)
     return chat
 
 
 @router_chat.patch("/{chat_id}", response_model=ChatPatch)
 async def update_chat(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    service: Annotated[ChatService, Depends(get_chat_service)],
     chat_id: int,
     chat_data: ChatPatch,
 ):
-    stmt = select(Chat).where(Chat.id == chat_id)
-    result = await db.execute(stmt)
-    chat = result.scalar_one_or_none()
-
-    if chat is None:
-        raise HTTPException(status_code=404, detail="Chat not found")
-
-    update_data = chat_data.model_dump(exclude_unset=True)
-
-    for field, value in update_data.items():
-        setattr(chat, field, value)
-
-    await db.commit()
-    await db.refresh(chat)
-
+    chat = await service.update_chat(chat_id=chat_id, chat_data=chat_data)
     return chat
 
 
 @router_chat.delete("/{chat_id}", status_code=204)
 async def delete_chat(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    service: Annotated[ChatService, Depends(get_chat_service)],
     chat_id: int,
 ):
-    stmt = select(Chat).where(Chat.id == chat_id)
-    result = await db.execute(stmt)
-    chat = result.scalar_one_or_none()
-
-    if chat is None:
-        raise HTTPException(status_code=404, detail="Chat not found")
-
-    await db.delete(chat)
-    await db.commit()
+    await service.delete_chat(chat_id=chat_id)
+    return Response(status_code=204)

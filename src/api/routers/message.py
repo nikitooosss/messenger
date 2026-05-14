@@ -1,13 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.params import Depends
 from fastapi.responses import Response
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core import get_message_service
-from api.database import Message, get_db
 from api.schemas import MessageGet, MessagePatch, MessagePost
 from api.services import MessageService
 
@@ -21,7 +18,7 @@ router_message = APIRouter(
 async def get_limit_chat_messages(
     service: Annotated[MessageService, Depends(get_message_service)],
     limit: int,
-    chat_id: int
+    chat_id: int,
 ):
     messages = await service.get_chat_messages(limit=limit, chat_id=chat_id)
     return messages
@@ -51,7 +48,9 @@ async def update_message(
     message_id: int,
     message_data: MessagePatch,
 ):
-    message = await service.change_message(message_id=message_id, message_data=message_data)
+    message = await service.change_message(
+        message_id=message_id, message_data=message_data
+    )
     return message
 
 
@@ -62,4 +61,4 @@ async def delete_message(
 ):
     await service.delete_message(message_id=message_id)
 
-    return Response(status_code=204) 
+    return Response(status_code=204)

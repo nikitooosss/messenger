@@ -3,7 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Response
 from fastapi.params import Depends
 
-from api.core import get_current_user, get_user_service
+from api.core.deps import get_user_service
+from api.core.jwt import get_current_user
 from api.database import User
 from api.schemas import UserGet, UserPatch, UserPost
 from api.services import UserService
@@ -22,9 +23,7 @@ async def read_users_me(
 
 
 @router_user.get("/get", response_model=list[UserGet])
-async def get_all_users(
-    service: Annotated[UserService, Depends(get_user_service)]
-):
+async def get_all_users(service: Annotated[UserService, Depends(get_user_service)]):
     users = await service.get_all_users()
     return users
 

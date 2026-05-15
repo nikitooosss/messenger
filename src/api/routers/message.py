@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from fastapi.params import Depends
 from fastapi.responses import Response
 
-from api.core import get_message_service
+from api.core.deps import get_message_service
 from api.schemas import MessageGet, MessagePatch, MessagePost
 from api.services import MessageService
 

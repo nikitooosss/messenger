@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Response
 from fastapi.params import Depends
 
-from api.core import get_chat_service
+from api.core.deps import get_chat_service
 from api.schemas import ChatGet, ChatPatch, ChatPost
 from api.services import ChatService
 
@@ -31,7 +31,7 @@ async def get_chat_by_id(
     return chat
 
 
-@router_chat.post("/create", response_model=ChatPost)
+@router_chat.post("/create", response_model=ChatGet)
 async def create_chat(
     service: Annotated[ChatService, Depends(get_chat_service)],
     chat_data: ChatPost,
@@ -40,7 +40,7 @@ async def create_chat(
     return chat
 
 
-@router_chat.patch("/{chat_id}", response_model=ChatPatch)
+@router_chat.patch("/{chat_id}", response_model=ChatGet)
 async def update_chat(
     service: Annotated[ChatService, Depends(get_chat_service)],
     chat_id: int,

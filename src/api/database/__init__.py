@@ -5,6 +5,7 @@ from .models import (
     ChatParticipant,
     Message,
     User,
+    UserRole,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "Message",
     "User",
     "Base",
+    "UserRole",
 ]

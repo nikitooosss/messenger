@@ -1,0 +1,56 @@
+from typing import Annotated, Union
+
+from pydantic import Field
+
+from .events import (
+    ChatCreatedEvent,
+    ChatCreateEvent,
+    ChatDeletedEvent,
+    ChatDeleteEvent,
+    ChatParticipantCreatedEvent,
+    ChatParticipantCreateEvent,
+    ChatParticipantDeletedEvent,
+    ChatParticipantDeleteEvent,
+    ChatParticipantUpdatedEvent,
+    ChatParticipantUpdateEvent,
+    ChatUpdatedEvent,
+    ChatUpdateEvent,
+    MessageCreatedEvent,
+    MessageCreateEvent,
+    MessageDeletedEvent,
+    MessageDeleteEvent,
+    MessageUpdatedEvent,
+    MessageUpdateEvent,
+    UserOfflineEvent,
+    UserOnlineEvent,
+    UserStartTypingEvent,
+    UserStopTypingEvent,
+)
+
+Event = Annotated[
+    Union[
+        MessageCreateEvent,
+        MessageCreatedEvent,
+        MessageUpdateEvent,
+        MessageUpdatedEvent,
+        MessageDeleteEvent,
+        MessageDeletedEvent,
+        ChatCreateEvent,
+        ChatCreatedEvent,
+        ChatUpdateEvent,
+        ChatUpdatedEvent,
+        ChatDeleteEvent,
+        ChatDeletedEvent,
+        ChatParticipantCreateEvent,
+        ChatParticipantCreatedEvent,
+        ChatParticipantUpdateEvent,
+        ChatParticipantUpdatedEvent,
+        ChatParticipantDeleteEvent,
+        ChatParticipantDeletedEvent,
+        UserStartTypingEvent,
+        UserStopTypingEvent,
+        UserOnlineEvent,
+        UserOfflineEvent,
+    ],
+    Field(discriminator="type"),
+]

@@ -5,12 +5,13 @@ interface UserAvatarProps {
   user?: Pick<User, 'id' | 'name' | 'uniq_name' | 'avatar_url'> | null
   size?: number
   showOnline?: boolean
+  maxInitials?: number
 }
 
-function initials(u: UserAvatarProps['user']): string {
+function initials(u: UserAvatarProps['user'], max: number = 2): string {
   if (!u) return '?'
   const src = u.name?.trim() || u.uniq_name || '?'
-  return src.slice(0, 2).toUpperCase()
+  return src.slice(0, max).toUpperCase()
 }
 
 function hue(u: UserAvatarProps['user']): number {
@@ -21,7 +22,7 @@ function hue(u: UserAvatarProps['user']): number {
   return h
 }
 
-export function UserAvatar({ user, size = 40, showOnline = false }: UserAvatarProps) {
+export function UserAvatar({ user, size = 40, showOnline = false, maxInitials = 2 }: UserAvatarProps) {
   const online = useOnline(showOnline ? user?.id : null)
   const bg = `hsl(${hue(user)} 60% 55%)`
   const fontSize = Math.max(11, Math.floor(size * 0.4))
@@ -39,7 +40,7 @@ export function UserAvatar({ user, size = 40, showOnline = false }: UserAvatarPr
           className="flex h-full w-full items-center justify-center rounded-full font-semibold text-white"
           style={{ background: bg, fontSize }}
         >
-          {initials(user)}
+          {initials(user, maxInitials)}
         </div>
       )}
       {showOnline && online && (

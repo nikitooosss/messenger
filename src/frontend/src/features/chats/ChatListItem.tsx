@@ -56,10 +56,10 @@ export function ChatListItem({ chat }: ChatListItemProps) {
     >
       {chat.is_group ? (
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tg-accent text-sm font-semibold text-white">
-          #
+          {chat.name.charAt(0).toUpperCase()}
         </div>
       ) : (
-        <UserAvatar user={peerUser} size={40} showOnline />
+        <UserAvatar user={peerUser} size={40} showOnline maxInitials={1} />
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">

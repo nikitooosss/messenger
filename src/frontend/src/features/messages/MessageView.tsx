@@ -67,10 +67,10 @@ export function MessageView({ chatId }: MessageViewProps) {
       <header className="flex items-center gap-3 border-b border-tg-border bg-tg-panel px-4 py-3">
         {chat?.is_group ? (
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-tg-accent text-sm font-semibold text-white">
-            #
+            {chat.name.charAt(0).toUpperCase()}
           </div>
         ) : (
-          <UserAvatar user={peerUser ?? null} size={40} showOnline />
+          <UserAvatar user={peerUser ?? null} size={40} showOnline maxInitials={1} />
         )}
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium text-tg-text">{displayName}</div>

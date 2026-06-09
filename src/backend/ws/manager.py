@@ -7,7 +7,7 @@ from .schemas.events import BaseEvent
 
 class WSManager:
     def __init__(self):
-        self.active: dict[int, WebSocket] = {}
+        self.active: dict[int, set[WebSocket]] = {}
         self.rooms: dict[int, set[int]] = {}
         self.user_to_chats: dict[int, set[int]] = {}
 
@@ -27,7 +27,10 @@ class WSManager:
     ):
         await websocket.accept()
 
-        self.active[user_id] = websocket
+        if user_id not in self.active:
+            self.active[user_id] = set()
+
+        self.active[user_id].add(websocket)
 
         chats = await chat_service.get_chats_by_user_id(user_id=user_id)
         chat_ids = {chat.id for chat in chats}
@@ -37,19 +40,24 @@ class WSManager:
         for chat_id in chat_ids:
             self.rooms.setdefault(chat_id, set()).add(user_id)
 
-    async def disconnect(self, user_id: int):
-        self.active.pop(user_id, None)
+    async def disconnect(self, user_id: int, websocket: WebSocket):
+        self.active[user_id].discard(websocket)
 
-        chat_ids = self.user_to_chats.pop(user_id, set())
+        if not self.active[user_id]:
+            self.active.pop(user_id, None)
 
-        for chat_id in chat_ids:
-            room = self.rooms.get(chat_id)
+            chat_ids = self.user_to_chats.get(user_id, set())
 
-            if room:
-                room.discard(user_id)
+            for chat_id in chat_ids:
+                room = self.rooms.get(chat_id)
 
-                if not room:
-                    self.rooms.pop(chat_id, None)
+                if room:
+                    room.discard(user_id)
+
+                    if not room:
+                        self.rooms.pop(chat_id, None)
+
+        return self.active.get(user_id, None)
 
     def add_user_to_room(self, chat_id: int, user_id: int):
         if user_id not in self.active:
@@ -82,9 +90,16 @@ class WSManager:
         data = event.model_dump(mode="json")
 
         for user_id in recipients:
-            websocket = self.active.get(user_id)
+            websockets = self.active.get(user_id, set())
 
-            if not websocket:
-                continue
+            for websocket in websockets:
+                await websocket.send_json(data)
 
-            await websocket.send_json(data)
+    async def broadcast_error(self, user_id: int, message: str):
+        websockets = self.active.get(user_id)
+
+        if not websockets:
+            return
+
+        for websocket in websockets:
+            await websocket.send_json({"type": "error", "message": message})

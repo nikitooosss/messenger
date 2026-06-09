@@ -1,3 +1,4 @@
+import traceback
 from typing import Annotated
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -17,9 +18,10 @@ from backend.services.schemas.user import UserGet
 from backend.services.user import UserService
 
 from .dispatcher import WSDispatcher
+from .event_router import EventRouter
 from .manager import WSManager
-from .router import EventRouter
-from .schemas.events import BaseEvent, TypeEvent, UserOfflineEvent, UserOnlineEvent
+from .schemas.events import TypeEvent, UserOfflineEvent, UserOnlineEvent
+from .schemas.registry import parse_event
 from .state_update import StateUpdater
 
 router_ws = APIRouter(
@@ -56,15 +58,21 @@ async def websocket_endpoint(
         await websocket.close(code=1008)
         return
 
-    user = await user_service.get_current_user(token=token)
+    user_orm = await user_service.get_current_user(token=token)
 
     await ws_manager.connect(
-        user_id=user.id, websocket=websocket, chat_service=chat_service
+        user_id=user_orm.id, websocket=websocket, chat_service=chat_service
     )
 
-    await services.user_service.update_is_active_on_opposite(user_id=user.id)
+    print(f"\nUSER {user_orm.uniq_name} HAS CONNECTED\n")
 
-    event = UserOnlineEvent(type=TypeEvent.user_online, user_id=user.id)
+    await services.user_service.update_is_active_on_opposite(user_id=user_orm.id)
+
+    print(f"\nUSER {user_orm.uniq_name} ACTIVE UPDATED TO TRUE\n")
+
+    user = UserGet.model_validate(user_orm)
+    event = UserOnlineEvent(type=TypeEvent.user_online, user=user)
+
     recipients = event_router.route(event=event, ws_manager=ws_manager)
 
     await ws_manager.broadcast(event=event, recipients=recipients)
@@ -72,28 +80,51 @@ async def websocket_endpoint(
     try:
         while True:
             data = await websocket.receive_json()
-            event = BaseEvent.model_validate(data)
-            created_event = await ws_dispatcher.dispatch(event=event, services=services)
+            try:
+                event = parse_event(data)
+                created_event = await ws_dispatcher.dispatch(
+                    event=event, services=services
+                )
 
-            state_updater.update(
-                event=created_event,
-                ws_manager=ws_manager,
-            )
+                state_updater.update(
+                    event=created_event,
+                    ws_manager=ws_manager,
+                )
 
-            recipients = event_router.route(event=created_event, ws_manager=ws_manager)
+                recipients = event_router.route(
+                    event=created_event, ws_manager=ws_manager
+                )
 
-            await ws_manager.broadcast(event=created_event, recipients=recipients)
+                await ws_manager.broadcast(event=created_event, recipients=recipients)
+            except Exception as inner_err:
+                print(
+                    f"[WS] dispatch error for user {user.id} payload={data!r}: {inner_err}",
+                    flush=True,
+                )
+                traceback.print_exc()
+                await ws_manager.broadcast_error(
+                    user_id=user.id, message=str(inner_err)
+                )
 
     except WebSocketDisconnect:
+        still_online = await ws_manager.disconnect(user_id=user.id, websocket=websocket)
+        if still_online:
+            return
+
         await services.user_service.update_is_active_on_opposite(user_id=user.id)
 
+        print(f"\nUSER {user_orm.uniq_name} ACTIVE UPDATED TO FALSE\n")
+
         user_orm = await services.user_service.update_last_seen(user_id=user.id)
+        print(f"\nUSER {user_orm.uniq_name} LAST_SEEN WAS UPDATE TO NOW\n")
         user = UserGet.model_validate(user_orm)
 
         event = UserOfflineEvent(type=TypeEvent.user_offline, user=user)
         recipients = event_router.route(event=event, ws_manager=ws_manager)
 
-        await ws_manager.disconnect(user_id=user.id)
+        ws_manager.user_to_chats.pop(user.id)
+
+        print(f"\nUSER {user_orm.uniq_name} WAS DISCONNECT\n")
 
         await ws_manager.broadcast(event=event, recipients=recipients)
 
@@ -101,7 +132,13 @@ async def websocket_endpoint(
 @router_ws.get("/state")
 async def get_ws_state():
     return {
-        "active": list(ws_manager.active.keys()),
+        "active": {
+            user_id: {
+                "connections": len(websockets),
+                "sockets": [id(ws) for ws in websockets],
+            }
+            for user_id, websockets in ws_manager.active.items()
+        },
         "rooms": {chat_id: list(users) for chat_id, users in ws_manager.rooms.items()},
         "user_to_chats": {
             user_id: list(chats) for user_id, chats in ws_manager.user_to_chats.items()

@@ -171,7 +171,7 @@ class UserStopTypingEvent(BaseEvent):
 
 class UserOnlineEvent(BaseEvent):
     type: TypeEvent = TypeEvent.user_online
-    user_id: int
+    user: UserGet 
 
 
 class UserOfflineEvent(BaseEvent):

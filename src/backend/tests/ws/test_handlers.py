@@ -259,7 +259,7 @@ async def test_user_start_typing_handler():
     handler = UserStartTypingHandler()
     event = UserStartTypingEvent(user_id=1, chat_id=10)
 
-    result = handler.handle(event=event)
+    result = await handler.handle(event=event, services=None)
 
     assert isinstance(result, UserStartTypingEvent)
     assert result.user_id == 1
@@ -271,7 +271,7 @@ async def test_user_stop_typing_handler():
     handler = UserStopTypingHandler()
     event = UserStopTypingEvent(user_id=1, chat_id=10)
 
-    result = handler.handle(event=event)
+    result = await handler.handle(event=event, services=None)
 
     assert isinstance(result, UserStopTypingEvent)
     assert result.user_id == 1

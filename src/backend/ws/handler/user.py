@@ -1,3 +1,5 @@
+from backend.services.core.services_container import ServicesContainer
+
 from ..schemas.events import (
     TypeEvent,
     UserStartTypingEvent,
@@ -6,20 +8,26 @@ from ..schemas.events import (
 
 
 class UserStartTypingHandler:
-    def handle(self, event: UserStartTypingEvent):
-        user_id = event.user_id
-        chat_id = event.chat_id
-
+    async def handle(
+        self,
+        event: UserStartTypingEvent,
+        services: ServicesContainer,
+    ) -> UserStartTypingEvent:
         return UserStartTypingEvent(
-            type=TypeEvent.user_start_typing, user_id=user_id, chat_id=chat_id
+            type=TypeEvent.user_start_typing,
+            user_id=event.user_id,
+            chat_id=event.chat_id,
         )
 
 
 class UserStopTypingHandler:
-    def handle(self, event: UserStopTypingEvent):
-        user_id = event.user_id
-        chat_id = event.chat_id
-
+    async def handle(
+        self,
+        event: UserStopTypingEvent,
+        services: ServicesContainer,
+    ) -> UserStopTypingEvent:
         return UserStopTypingEvent(
-            type=TypeEvent.user_stop_typing, user_id=user_id, chat_id=chat_id
+            type=TypeEvent.user_stop_typing,
+            user_id=event.user_id,
+            chat_id=event.chat_id,
         )

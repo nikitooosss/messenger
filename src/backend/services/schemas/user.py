@@ -1,10 +1,13 @@
 from datetime import datetime
 from typing import Optional
 
+from pydantic import ConfigDict
 from pydantic.main import BaseModel
 
 
 class UserGet(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     uniq_name: str
     name: Optional[str] = None

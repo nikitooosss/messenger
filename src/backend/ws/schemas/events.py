@@ -127,32 +127,32 @@ class ChatDeletedEvent(BaseEvent):
     participants: list[ChatParticipantGet]
 
 
-class ChatParticipantCreateEvent(BaseModel):
+class ChatParticipantCreateEvent(BaseEvent):
     type: TypeEvent = TypeEvent.chat_participant_create
     chat_participant: ChatParticipantPost
 
 
-class ChatParticipantCreatedEvent(BaseModel):
+class ChatParticipantCreatedEvent(BaseEvent):
     type: TypeEvent = TypeEvent.chat_participant_created
     chat_participant: ChatParticipantGet
 
 
-class ChatParticipantUpdateEvent(BaseModel):
+class ChatParticipantUpdateEvent(BaseEvent):
     type: TypeEvent = TypeEvent.chat_participant_update
     chat_participant: ChatParticipantPatch
 
 
-class ChatParticipantUpdatedEvent(BaseModel):
+class ChatParticipantUpdatedEvent(BaseEvent):
     type: TypeEvent = TypeEvent.chat_participant_updated
     chat_participant: ChatParticipantGet
 
 
-class ChatParticipantDeleteEvent(BaseModel):
+class ChatParticipantDeleteEvent(BaseEvent):
     type: TypeEvent = TypeEvent.chat_participant_delete
     chat_participant: ChatParticipantGet
 
 
-class ChatParticipantDeletedEvent(BaseModel):
+class ChatParticipantDeletedEvent(BaseEvent):
     type: TypeEvent = TypeEvent.chat_participant_deleted
     chat_participant: ChatParticipantDelete
 
@@ -171,7 +171,7 @@ class UserStopTypingEvent(BaseEvent):
 
 class UserOnlineEvent(BaseEvent):
     type: TypeEvent = TypeEvent.user_online
-    user: UserGet 
+    user: UserGet
 
 
 class UserOfflineEvent(BaseEvent):

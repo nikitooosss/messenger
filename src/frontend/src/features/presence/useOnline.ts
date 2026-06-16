@@ -10,7 +10,7 @@ function notify() {
 
 presenceBus.on((ev) => {
   if (ev.type === 'user_online') {
-    online.add(ev.user_id)
+    online.add(ev.user.id)
     notify()
   } else if (ev.type === 'user_offline') {
     online.delete(ev.user.id)
@@ -18,9 +18,10 @@ presenceBus.on((ev) => {
   }
 })
 
-export function seedOnline(id: number, isOnline: boolean) {
-  if (isOnline) online.add(id)
-  else online.delete(id)
+export function seedOnlineFromRoster(userIds: number[]) {
+  for (const id of userIds) {
+    online.add(id)
+  }
   notify()
 }
 

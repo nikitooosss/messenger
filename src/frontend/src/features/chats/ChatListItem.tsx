@@ -2,18 +2,21 @@ import { useNavigate, useParams } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/apiClient'
 import { qk } from '../../lib/queryKeys'
-import { formatTime } from '../../lib/time'
+import { formatTime, formatLastSeen } from '../../lib/time'
 import { UserAvatar } from '../../components/UserAvatar'
-import type { Chat, ChatParticipant, User } from '../../types/models'
+import { useOnline } from '../presence/useOnline'
+import { useCurrentUser } from '../../auth/useCurrentUser'
+import type { Chat, ChatParticipant, ChatWithDisplayName, User } from '../../types/models'
 
 interface ChatListItemProps {
-  chat: Chat
+  chat: Chat | ChatWithDisplayName
 }
 
 export function ChatListItem({ chat }: ChatListItemProps) {
   const navigate = useNavigate()
   const { chatId: activeId } = useParams({ strict: false }) as { chatId?: string }
   const isActive = String(chat.id) === activeId
+  const { data: me } = useCurrentUser()
 
   const { data: participants = [] } = useQuery<ChatParticipant[]>({
     queryKey: qk.participants(chat.id),
@@ -36,16 +39,31 @@ export function ChatListItem({ chat }: ChatListItemProps) {
 
   const peer = chat.is_group
     ? null
-    : participants.find((p) => p.user_id !== undefined) ?? null
+    : participants.find((p) => p.user_id !== me?.id) ?? null
   const peerUser = peer ? users.find((u) => u.id === peer.user_id) : null
 
-  const displayName = chat.is_group
-    ? chat.name
-    : peerUser?.name?.trim() || peerUser?.uniq_name || chat.name
+  const peerOnline = useOnline(chat.is_group ? null : peerUser?.id)
+
+  const displayName =
+    'display_name' in chat
+      ? chat.display_name
+      : chat.is_group
+        ? chat.name
+        : peerUser?.name?.trim() || peerUser?.uniq_name || chat.name
 
   const previewAuthor = last
     ? users.find((u) => u.id === last.user_id)?.uniq_name ?? 'user'
     : null
+
+  const subtitle = last
+    ? `${previewAuthor}: ${last.content}`
+    : chat.is_group
+      ? `${participants.length} members`
+      : peerOnline
+        ? 'online'
+        : peerUser
+          ? formatLastSeen(peerUser.last_seen)
+          : 'No messages yet'
 
   return (
     <button
@@ -71,11 +89,17 @@ export function ChatListItem({ chat }: ChatListItemProps) {
           )}
         </div>
         <div className="truncate text-sm text-tg-mute">
-          {last
-            ? `${previewAuthor}: ${last.content}`
-            : chat.is_group
-              ? `${participants.length} members`
-              : 'No messages yet'}
+          {last ? (
+            subtitle
+          ) : chat.is_group ? (
+            `${participants.length} members`
+          ) : peerOnline ? (
+            <span className="text-tg-online">online</span>
+          ) : peerUser ? (
+            formatLastSeen(peerUser.last_seen)
+          ) : (
+            'No messages yet'
+          )}
         </div>
       </div>
     </button>

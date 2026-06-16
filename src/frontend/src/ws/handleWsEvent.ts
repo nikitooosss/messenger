@@ -1,7 +1,8 @@
 import { QueryClient } from '@tanstack/react-query'
 import { qk } from '../lib/queryKeys'
 import { notifyChatCreated, notifyParticipantCreated } from '../lib/wsWait'
-import type { Chat, ChatParticipant, Message } from '../types/models'
+import { seedOnlineFromRoster } from '../features/presence/useOnline'
+import type { Chat, ChatParticipant, Message, User } from '../types/models'
 import type { ServerEvent } from '../types/wsEvents'
 import { presenceBus } from '../features/presence/presenceStore'
 
@@ -9,12 +10,15 @@ export function handleWsEvent(ev: ServerEvent, qc: QueryClient): void {
   switch (ev.type) {
     case 'message_created': {
       qc.setQueryData<Message[]>(qk.messages(ev.message.chat_id), (old = []) => {
-        const withoutTemp = old.filter(
-          (m) =>
-            m.id !== ev.message.id &&
-            !(m.id < 0 && m.content === ev.message.content && m.user_id === ev.message.user_id),
+        const real = ev.message
+        if (old.some((m) => m.id === real.id)) return old
+        const idx = old.findIndex(
+          (m) => m.id < 0 && m.user_id === real.user_id,
         )
-        return [...withoutTemp, ev.message]
+        if (idx === -1) return [...old, real]
+        const next = old.slice()
+        next[idx] = real
+        return next
       })
       break
     }
@@ -67,6 +71,7 @@ export function handleWsEvent(ev: ServerEvent, qc: QueryClient): void {
       qc.setQueryData<Chat[]>(qk.chats(), (old = []) =>
         old.filter((c) => c.id !== ev.chat.id),
       )
+      qc.invalidateQueries({ queryKey: qk.chats() })
       qc.removeQueries({ queryKey: qk.chat(ev.chat.id) })
       qc.removeQueries({ queryKey: qk.messages(ev.chat.id) })
       qc.removeQueries({ queryKey: qk.participants(ev.chat.id) })
@@ -102,8 +107,21 @@ export function handleWsEvent(ev: ServerEvent, qc: QueryClient): void {
       break
     }
 
+    case 'presence_roster': {
+      seedOnlineFromRoster(ev.user_ids)
+      break
+    }
+
     case 'user_online':
     case 'user_offline':
+      qc.setQueryData<User[]>(qk.users, (old = []) =>
+        old.length === 0
+          ? old
+          : old.map((u) => (u.id === ev.user.id ? ev.user : u)),
+      )
+      presenceBus.emit(ev)
+      break
+
     case 'user_start_typing':
     case 'user_stop_typing':
       presenceBus.emit(ev)

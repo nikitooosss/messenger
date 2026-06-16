@@ -22,6 +22,7 @@ from .events import (
     MessageDeleteEvent,
     MessageUpdatedEvent,
     MessageUpdateEvent,
+    PresenceRosterEvent,
     TypeEvent,
     UserOfflineEvent,
     UserOnlineEvent,
@@ -52,6 +53,7 @@ EVENT_CLASSES_BY_TYPE: dict[TypeEvent, Type[BaseEvent]] = {
     TypeEvent.user_stop_typing: UserStopTypingEvent,
     TypeEvent.user_online: UserOnlineEvent,
     TypeEvent.user_offline: UserOfflineEvent,
+    TypeEvent.presence_roster: PresenceRosterEvent,
 }
 
 
@@ -85,6 +87,7 @@ Event = Annotated[
         UserStopTypingEvent,
         UserOnlineEvent,
         UserOfflineEvent,
+        PresenceRosterEvent,
     ],
     Field(discriminator="type"),
 ]

@@ -14,6 +14,7 @@ const SAFETY_TIMEOUT_MS = 5000
 export function TypingIndicator({ chatId }: TypingIndicatorProps) {
   const { data: me } = useCurrentUser()
   const { data: users = [] } = useQuery({ queryKey: qk.users, queryFn: api.users })
+
   const [typers, setTypers] = useState<Map<number, number>>(new Map())
 
   useEffect(() => {

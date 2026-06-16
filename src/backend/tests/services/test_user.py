@@ -132,15 +132,57 @@ async def test_update_last_seen(
 
 
 @pytest.mark.asyncio
-async def test_update_is_active_on_opposite(
+async def test_update_is_active_to_true(
     user_service: UserService,
     db_session: AsyncSession,
 ):
     user_orm = await create_user_orm(
-        db_session, uniq_name="active_test", is_active=False
+        db_session, uniq_name="active_true_test", is_active=False
     )
 
-    await user_service.update_is_active_on_opposite(user_id=user_orm.id)
+    await user_service.update_is_active_to_true(user_id=user_orm.id)
 
     await db_session.refresh(user_orm)
     assert user_orm.is_active is True
+
+
+@pytest.mark.asyncio
+async def test_update_is_active_to_false(
+    user_service: UserService,
+    db_session: AsyncSession,
+):
+    user_orm = await create_user_orm(
+        db_session, uniq_name="active_false_test", is_active=True
+    )
+
+    await user_service.update_is_active_to_false(user_id=user_orm.id)
+
+    await db_session.refresh(user_orm)
+    assert user_orm.is_active is False
+
+
+@pytest.mark.asyncio
+async def test_reset_all_is_active(
+    user_service: UserService,
+    db_session: AsyncSession,
+):
+    a = await create_user_orm(db_session, uniq_name="reset_a", is_active=True)
+    b = await create_user_orm(db_session, uniq_name="reset_b", is_active=True)
+
+    await user_service.reset_all_is_active()
+
+    await db_session.refresh(a)
+    await db_session.refresh(b)
+    assert a.is_active is False
+    assert b.is_active is False
+
+
+@pytest.mark.asyncio
+async def test_reset_all_is_active_no_users(
+    user_service: UserService,
+    db_session: AsyncSession,
+):
+    await user_service.reset_all_is_active()
+
+    users = await user_service.get_all_users()
+    assert users == []

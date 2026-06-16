@@ -21,7 +21,7 @@ from backend.services.schemas.message import (
     MessagePatch,
     MessagePost,
 )
-from backend.services.schemas.user import UserGet
+from backend.services.schemas.user import UserPublic
 
 
 class TypeEvent(enum.Enum):
@@ -57,6 +57,8 @@ class TypeEvent(enum.Enum):
 
     user_online = "user_online"
     user_offline = "user_offline"
+
+    presence_roster = "presence_roster"
 
 
 class BaseEvent(BaseModel):
@@ -119,6 +121,7 @@ class ChatUpdatedEvent(BaseEvent):
 class ChatDeleteEvent(BaseEvent):
     type: TypeEvent = TypeEvent.chat_delete
     chat: ChatGet
+    user_id: int
 
 
 class ChatDeletedEvent(BaseEvent):
@@ -171,9 +174,14 @@ class UserStopTypingEvent(BaseEvent):
 
 class UserOnlineEvent(BaseEvent):
     type: TypeEvent = TypeEvent.user_online
-    user: UserGet
+    user: UserPublic
 
 
 class UserOfflineEvent(BaseEvent):
     type: TypeEvent = TypeEvent.user_offline
-    user: UserGet
+    user: UserPublic
+
+
+class PresenceRosterEvent(BaseEvent):
+    type: TypeEvent = TypeEvent.presence_roster
+    user_ids: list[int]

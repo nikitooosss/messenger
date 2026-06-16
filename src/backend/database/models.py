@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
 
@@ -38,7 +40,7 @@ class User(Base):
         TIMESTAMP, server_default=func.now(), nullable=False
     )
     last_seen: Mapped[datetime] = mapped_column(
-        TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False
+        TIMESTAMP, server_default=func.now(), nullable=False
     )
 
     # Relationships
@@ -107,8 +109,10 @@ class Message(Base):
     content: Mapped[str] = mapped_column(String, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP, server_default=func.now(), nullable=False
+        TIMESTAMP, nullable=False
     )
+
+    client_msg_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
     # Relationships
     user: Mapped[User] = relationship(back_populates="messages")

@@ -45,7 +45,7 @@ export type ClientEvent =
   | { type: 'message_delete'; message: Message }
   | { type: 'chat_create'; chat: ChatPostPayload; participants: ParticipantPostPayload[] }
   | { type: 'chat_update'; chat: ChatPatchPayload }
-  | { type: 'chat_delete'; chat: Chat }
+  | { type: 'chat_delete'; chat: Chat; user_id: number }
   | { type: 'chat_participant_create'; chat_participant: ParticipantPostPayload }
   | { type: 'chat_participant_update'; chat_participant: ParticipantPatchPayload }
   | { type: 'chat_participant_delete'; chat_participant: ChatParticipant }
@@ -62,8 +62,9 @@ export type ServerEvent =
   | { type: 'chat_participant_created'; chat_participant: ChatParticipant }
   | { type: 'chat_participant_updated'; chat_participant: ChatParticipant }
   | { type: 'chat_participant_deleted'; chat_participant: { id: number; chat_id: number; user_id: number } }
-  | { type: 'user_online'; user_id: number }
+  | { type: 'user_online'; user: User }
   | { type: 'user_offline'; user: User }
+  | { type: 'presence_roster'; user_ids: number[] }
   | { type: 'user_start_typing'; user_id: number; chat_id: number }
   | { type: 'user_stop_typing'; user_id: number; chat_id: number }
   | { type: 'error'; message: string }

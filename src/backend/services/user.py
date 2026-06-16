@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from jwt import InvalidTokenError
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.services.schemas.jwt import TokenData
@@ -138,19 +138,34 @@ class UserService:
 
         return user
 
-    async def update_is_active_on_opposite(
+    async def update_is_active_to_true(
         self,
-        user_id: int,
+        user_id: int
     ):
         user = await self._get_user_orm_by_id(user_id=user_id)
-        current_active_status = user.is_active
 
-        if current_active_status:
-            user.is_active = False
         user.is_active = True
 
         await self.db.commit()
         await self.db.refresh(user)
+
+    async def update_is_active_to_false(
+        self,
+        user_id: int
+    ):
+        user = await self._get_user_orm_by_id(user_id=user_id)
+
+        user.is_active = False
+
+        await self.db.commit()
+        await self.db.refresh(user)
+
+    async def reset_all_is_active(
+        self,
+    ):
+        stmt = update(User).values(is_active=False)
+        await self.db.execute(stmt)
+        await self.db.commit()
 
     async def delete_user(
         self,

@@ -50,7 +50,7 @@ export function MessageInput({ chatId }: MessageInputProps) {
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!value.trim()) return
-    send(value)
+    send({ content: value })
     setValue('')
     sendStop()
   }

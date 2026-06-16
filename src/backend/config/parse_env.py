@@ -16,5 +16,5 @@ POSTGRES_DSN: Final[str] = (
 )
 
 SECRET_KEY: Final[str] = os.getenv("SECRET_KEY", "secret_key")
-ALGORITHM: Final[str] = os.getenv("ALGORITHM", "algorythm")
+ALGORITHM: Final[str] = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES: Final[int] = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 1))

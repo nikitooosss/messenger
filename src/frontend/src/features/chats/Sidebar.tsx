@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useCurrentUser } from '../../auth/useCurrentUser'
 import { useChats } from './useChats'
+import { useSearchChats } from './useSearchChats'
 import { ChatListItem } from './ChatListItem'
 import { CreateChatDialog } from './CreateChatDialog'
 import { UserAvatar } from '../../components/UserAvatar'
@@ -13,11 +14,15 @@ export function Sidebar() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
-  const { data: chats, isLoading } = useChats(me?.id)
-
-  const filtered = (chats ?? []).filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()),
+  const { data: chats, isLoading: isLoadingChats } = useChats(me?.id)
+  const { data: searchResults, isLoading: isLoadingSearch } = useSearchChats(
+    me?.id,
+    search,
   )
+
+  const isSearching = search.length > 0
+  const filtered = isSearching ? (searchResults ?? []) : (chats ?? [])
+  const isLoading = isSearching ? isLoadingSearch : isLoadingChats
 
   return (
     <aside className="flex h-full w-80 shrink-0 flex-col border-r border-tg-border bg-tg-sidebar">

@@ -51,8 +51,8 @@ export function WebSocketProvider({
       setStatus("open");
       const pending = queueRef.current.splice(0);
       pending.forEach((ev) => ws.send(JSON.stringify(ev)));
-      qc.invalidateQueries({ queryKey: qk.messagesRoot });
       qc.invalidateQueries({ queryKey: qk.chats() });
+      qc.invalidateQueries({ queryKey: qk.messagesRoot });
     };
 
     ws.onmessage = (e) => {

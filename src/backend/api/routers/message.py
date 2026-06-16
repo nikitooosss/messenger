@@ -33,7 +33,7 @@ async def get_message_by_id(
     return message
 
 
-@router_message.post("/create", response_model=MessagePost)
+@router_message.post("/create", response_model=MessageGet)
 async def create_message(
     service: Annotated[MessageService, Depends(get_message_service)],
     message_data: MessagePost,

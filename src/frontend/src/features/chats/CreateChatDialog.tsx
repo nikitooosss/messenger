@@ -75,12 +75,13 @@ export function CreateChatDialog({ open, onClose }: Props) {
     }
     const finalName = chatType === 'group'
       ? name.trim()
-      : users.find((u) => u.id === Array.from(selected)[0])?.uniq_name ?? 'Chat'
+      : 'personal_chat'
     try {
       const chat = await createChat.mutateAsync({
         name: finalName,
         participantUserIds: Array.from(new Set([me.id, ...selected])),
         meId: me.id,
+        chatType,
       })
       reset()
       onClose()

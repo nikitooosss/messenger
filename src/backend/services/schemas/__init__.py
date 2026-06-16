@@ -2,6 +2,7 @@ from .chat import (
     ChatGet,
     ChatPatch,
     ChatPost,
+    ChatWithDisplayName,
 )
 from .chat_participant import (
     ChatParticipantGet,
@@ -21,12 +22,14 @@ from .user import (
     UserGet,
     UserPatch,
     UserPost,
+    UserPublic,
 )
 
 __all__ = [
     "ChatGet",
     "ChatPatch",
     "ChatPost",
+    "ChatWithDisplayName",
     "ChatParticipantGet",
     "ChatParticipantPatch",
     "ChatParticipantPost",
@@ -36,6 +39,7 @@ __all__ = [
     "UserGet",
     "UserPatch",
     "UserPost",
+    "UserPublic",
     "TokenData",
     "Token",
 ]

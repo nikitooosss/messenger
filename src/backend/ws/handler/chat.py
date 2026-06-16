@@ -27,6 +27,7 @@ class ChatCreateHandler:
         self,
         event: ChatCreateEvent,
         services: ServicesContainer,
+        user_id: int,
     ):
         chat_orm = await services.chat_service.create_chat(
             chat_data=ChatPost(
@@ -70,6 +71,7 @@ class ChatUpdateHandler:
         self,
         event: ChatUpdateEvent,
         services: ServicesContainer,
+        user_id: int,
     ):
         chat_id = event.chat.id
         chat_data = ChatPatch.model_validate(event.chat.model_dump(exclude_none=True))
@@ -87,6 +89,7 @@ class ChatDeleteHandler:
         self,
         event: ChatDeleteEvent,
         services: ServicesContainer,
+        user_id: int,
     ):
         chat_id = event.chat.id
 
@@ -95,6 +98,13 @@ class ChatDeleteHandler:
                 chat_id=chat_id
             )
         )
+
+        user_participant = next(
+            (p for p in participants_orm if p.user_id == user_id), None
+        )
+        if user_participant is None or user_participant.role.value != "admin":
+            raise PermissionError("Only admins can delete a chat")
+
         participants = [ChatParticipantGet.model_validate(p) for p in participants_orm]
 
         await services.chat_service.delete_chat(chat_id=chat_id)

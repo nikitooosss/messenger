@@ -27,6 +27,16 @@ class ChatGet(BaseModel):
     created_at: datetime
 
 
+class ChatWithDisplayName(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    is_group: bool
+    created_at: datetime
+    display_name: str
+
+
 class ChatPost(BaseModel):
     name: str
     is_group: bool

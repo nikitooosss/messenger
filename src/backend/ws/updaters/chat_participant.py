@@ -2,7 +2,7 @@ from ..manager import WSManager
 
 
 class ChatParticipantCreateStateUpdater:
-    def update(self, event, ws_manager: WSManager):
+    async def update(self, event, ws_manager: WSManager, user_id: int | None = None):
         user_id = event.chat_participant.user_id
         chat_id = event.chat_participant.chat_id
 
@@ -19,7 +19,7 @@ class ChatParticipantCreateStateUpdater:
 
 
 class ChatParticipantDeleteStateUpdater:
-    def update(self, event, ws_manager: WSManager):
+    async def update(self, event, ws_manager: WSManager, user_id: int | None = None):
         chat_id = event.chat_participant.chat_id
         user_id = event.chat_participant.user_id
 

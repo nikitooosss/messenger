@@ -7,6 +7,7 @@ interface CreateGroupArgs {
   name: string
   participantUserIds: number[]
   meId: number
+  chatType: 'personal' | 'group'
 }
 
 export function useCreateChat() {
@@ -17,13 +18,14 @@ export function useCreateChat() {
       name,
       participantUserIds,
       meId,
+      chatType,
     }: CreateGroupArgs): Promise<ChatDetails> => {
-      const isGroup = participantUserIds.length > 1
+      const isGroup = chatType === 'group'
       const finalName = isGroup ? name.trim() || 'Group chat' : name
       const participants = participantUserIds.map((userId) => ({
         chat_id: 0,
         user_id: userId,
-        role: (userId === meId ? 'admin' : 'member') as UserRole,
+        role: (isGroup ? (userId === meId ? 'admin' : 'member') : 'admin') as UserRole,
       }))
 
       const promise = waitForNextChatCreated((c) => c.name === finalName)

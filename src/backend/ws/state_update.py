@@ -16,11 +16,12 @@ class StateUpdater:
             TypeEvent.chat_participant_deleted: ChatParticipantDeleteStateUpdater(),
         }
 
-    def update(self, event, ws_manager: WSManager):
+    async def update(self, event, ws_manager: WSManager, user_id: int | None = None):
         updater = self.updaters.get(event.type)
 
         if updater:
-            updater.update(
+            await updater.update(
                 event=event,
                 ws_manager=ws_manager,
+                user_id=user_id,
             )

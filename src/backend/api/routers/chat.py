@@ -1,10 +1,10 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Response
 from fastapi.params import Depends
 
 from ...services.chat import ChatService
-from ...services.schemas.chat import ChatGet, ChatPatch, ChatPost
+from ...services.schemas.chat import ChatGet, ChatPatch, ChatPost, ChatWithDisplayName
 from ..core.deps import get_chat_service
 
 router_chat = APIRouter(
@@ -19,6 +19,16 @@ async def get_all_user_chats(
     user_id: int,
 ):
     chats = await service.get_chats_by_user_id(user_id=user_id)
+    return chats
+
+
+@router_chat.get("/search", response_model=list[ChatWithDisplayName])
+async def search_chats(
+    service: Annotated[ChatService, Depends(get_chat_service)],
+    user_id: int,
+    q: Optional[str] = None,
+):
+    chats = await service.search_chats(user_id=user_id, query=q)
     return chats
 
 

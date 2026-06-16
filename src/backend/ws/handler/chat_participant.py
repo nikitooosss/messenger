@@ -11,6 +11,7 @@ from ..schemas.events import (
     ChatParticipantCreateEvent,
     ChatParticipantDeletedEvent,
     ChatParticipantDeleteEvent,
+    ChatParticipantUpdateEvent,
     ChatParticipantUpdatedEvent,
     TypeEvent,
 )
@@ -21,6 +22,7 @@ class ChatParticipantCreateHandler:
         self,
         event: ChatParticipantCreateEvent,
         services: ServicesContainer,
+        user_id: int,
     ) -> ChatParticipantCreatedEvent:
 
         participant_data = ChatParticipantPost.model_validate(event.chat_participant)
@@ -40,8 +42,9 @@ class ChatParticipantCreateHandler:
 class ChatParticipantUpdateHandler:
     async def handle(
         self,
-        event: ChatParticipantUpdatedEvent,
+        event: ChatParticipantUpdateEvent,
         services: ServicesContainer,
+        user_id: int,
     ) -> ChatParticipantUpdatedEvent:
 
         patch_data = ChatParticipantPatch.model_validate(event.chat_participant)
@@ -64,6 +67,7 @@ class ChatParticipantDeleteHandler:
         self,
         event: ChatParticipantDeleteEvent,
         services: ServicesContainer,
+        user_id: int,
     ) -> ChatParticipantDeletedEvent:
 
         chat_participant_id = event.chat_participant.id

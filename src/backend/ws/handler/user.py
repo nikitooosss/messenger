@@ -12,6 +12,7 @@ class UserStartTypingHandler:
         self,
         event: UserStartTypingEvent,
         services: ServicesContainer,
+        user_id: int,
     ) -> UserStartTypingEvent:
         return UserStartTypingEvent(
             type=TypeEvent.user_start_typing,
@@ -25,6 +26,7 @@ class UserStopTypingHandler:
         self,
         event: UserStopTypingEvent,
         services: ServicesContainer,
+        user_id: int,
     ) -> UserStopTypingEvent:
         return UserStopTypingEvent(
             type=TypeEvent.user_stop_typing,

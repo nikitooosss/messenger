@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import pytest_asyncio
 from dotenv import load_dotenv
@@ -172,7 +173,12 @@ async def create_message_orm(
     user_id: int,
     content: str = "Hello, World!",
 ) -> Message:
-    message = Message(chat_id=chat_id, user_id=user_id, content=content)
+    message = Message(
+        chat_id=chat_id,
+        user_id=user_id,
+        content=content,
+        created_at=datetime.utcnow(),
+    )
     db_session.add(message)
     await db_session.commit()
     await db_session.refresh(message)

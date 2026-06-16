@@ -4,7 +4,7 @@ from fastapi import APIRouter, Cookie, Response
 from fastapi.exceptions import HTTPException
 from fastapi.params import Depends
 
-from ...services.schemas.user import UserGet, UserPatch, UserPost
+from ...services.schemas.user import UserGet, UserPatch, UserPost, UserPublic
 from ...services.user import UserService
 from ..core.deps import get_user_service
 
@@ -14,7 +14,7 @@ router_user = APIRouter(
 )
 
 
-@router_user.get("/me")
+@router_user.get("/me", response_model=UserPublic)
 async def read_users_me(
     service: Annotated[UserService, Depends(get_user_service)],
     access_token: str | None = Cookie(default=None),

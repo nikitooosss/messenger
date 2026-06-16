@@ -163,7 +163,11 @@ async def test_chat_delete_handler(
     services_container: ServicesContainer,
     db_session: AsyncSession,
 ):
+    user_orm = await create_user_orm(db_session, uniq_name="chat_handler_user")
     chat_orm = await create_chat_orm(db_session, name="Delete Chat")
+    part_orm = await create_participant_orm(
+        db_session, chat_id=chat_orm.id, user_id=user_orm.id, role=UserRole.admin
+    )
 
     handler = ChatDeleteHandler()
     event = ChatDeleteEvent(
@@ -173,6 +177,7 @@ async def test_chat_delete_handler(
             "is_group": False,
             "created_at": "2024-01-01T00:00:00",
         },
+        user_id=user_orm.id,
     )
 
     result = await handler.handle(event=event, services=services_container)

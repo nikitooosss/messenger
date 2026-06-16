@@ -3,7 +3,6 @@ from backend.services.schemas.message import (
     MessageDelete,
     MessageGet,
     MessagePatch,
-    MessagePost,
 )
 
 from ..schemas.events import (
@@ -22,15 +21,10 @@ class MessageCreateHandler:
         self,
         event: MessageCreateEvent,
         services: ServicesContainer,
+        user_id: int,
     ):
-        chat_id = event.message.chat_id
-        user_id = event.message.user_id
-        content = event.message.content
-
-        message_data = MessagePost(chat_id=chat_id, user_id=user_id, content=content)
-
         message_orm = await services.message_service.create_message(
-            message_data=message_data
+            message_data=event.message
         )
         message = MessageGet.model_validate(message_orm)
 
@@ -42,6 +36,7 @@ class MessageUpdateHandler:
         self,
         event: MessageUpdateEvent,
         services: ServicesContainer,
+        user_id: int,
     ):
         message_id = event.message.id
         message_data = MessagePatch.model_validate(
@@ -62,6 +57,7 @@ class MessageDeleteHandler:
         self,
         event: MessageDeleteEvent,
         services: ServicesContainer,
+        user_id: int,
     ):
         message_id = event.message.id
 

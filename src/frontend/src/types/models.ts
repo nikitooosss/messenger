@@ -17,6 +17,10 @@ export interface Chat {
   created_at: string
 }
 
+export interface ChatWithDisplayName extends Chat {
+  display_name: string
+}
+
 export interface ChatDetails extends Chat {
   participants: ChatParticipant[]
 }

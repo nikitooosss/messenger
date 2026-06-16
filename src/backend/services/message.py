@@ -21,7 +21,12 @@ class MessageService:
         limit: int,
         chat_id: int,
     ):
-        stmt = select(Message).limit(limit).where(Message.chat_id == chat_id)
+        stmt = (
+            select(Message)
+            .where(Message.chat_id == chat_id)
+            .order_by(Message.created_at.desc(), Message.id.desc())
+            .limit(limit)
+        )
         result = await self.db.execute(stmt)
         messages = result.scalars().all()
 

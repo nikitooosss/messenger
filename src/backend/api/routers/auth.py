@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from backend.services.auth import AuthService
 from backend.services.jwt import JWTService
 from backend.services.schemas import TokenData
+from backend.services.schemas.user import UserPublic
 
 from ..core.deps import get_auth_service, get_jwt_service
 from ..schemas.auth import UserRegister
@@ -18,7 +19,7 @@ router_auth = APIRouter(
 )
 
 
-@router_auth.post("/register")
+@router_auth.post("/register", response_model=UserPublic)
 async def register_user(
     service: Annotated[AuthService, Depends(get_auth_service)],
     user_data: UserRegister,

@@ -8,7 +8,7 @@ from ..api.schemas.auth import UserRegister
 from ..database.get_db import get_db
 from ..database.models import User
 from .core.password import hash_password, verify_password
-from .schemas.user import UserGet
+from .schemas.user import UserGet, UserPublic
 
 
 class AuthService:

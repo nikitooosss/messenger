@@ -1,12 +1,13 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from ..database.get_db import get_db
-from ..database.models import Chat, ChatParticipant
-from .schemas import ChatGet, ChatPatch, ChatPost
+from ..database.models import Chat, ChatParticipant, User
+from .schemas import ChatGet, ChatPatch, ChatPost, ChatWithDisplayName
 
 
 class ChatService:
@@ -97,3 +98,44 @@ class ChatService:
         await self.db.commit()
 
         return None
+
+    async def search_chats(
+        self,
+        user_id: int,
+        query: Optional[str] = None,
+    ) -> list[ChatWithDisplayName]:
+        stmt = (
+            select(Chat)
+            .join(ChatParticipant)
+            .options(joinedload(Chat.participants).joinedload(ChatParticipant.user))
+            .filter(ChatParticipant.user_id == user_id)
+        )
+        result = await self.db.execute(stmt)
+        chats = result.unique().scalars().all()
+
+        chat_results = []
+        for chat in chats:
+            display_name = chat.name
+
+            if not chat.is_group:
+                peer = next(
+                    (p for p in chat.participants if p.user_id != user_id),
+                    None,
+                )
+                if peer and peer.user:
+                    display_name = peer.user.name or peer.user.uniq_name
+
+            if query and query.lower() not in display_name.lower():
+                continue
+
+            chat_results.append(
+                ChatWithDisplayName(
+                    id=chat.id,
+                    name=chat.name,
+                    is_group=chat.is_group,
+                    created_at=chat.created_at,
+                    display_name=display_name,
+                )
+            )
+
+        return chat_results

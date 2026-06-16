@@ -37,10 +37,10 @@ class WSDispatcher:
             TypeEvent.user_stop_typing: UserStopTypingHandler(),
         }
 
-    async def dispatch(self, event: BaseEvent, services: ServicesContainer) -> BaseEvent:
+    async def dispatch(self, event: BaseEvent, services: ServicesContainer, user_id: int) -> BaseEvent:
         handler = self.handlers.get(event.type)
 
         if handler is None:
             raise ValueError(f"Unknown event type: {event.type}")
 
-        return await handler.handle(event, services)
+        return await handler.handle(event, services, user_id)

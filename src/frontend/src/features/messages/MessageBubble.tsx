@@ -23,6 +23,12 @@ export function MessageBubble({ message, showAuthor, isOwn, isOptimistic, author
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (!editing) {
+      setDraft(message.content)
+    }
+  }, [message.content, editing])
+
+  useEffect(() => {
     if (!menuOpen) return
     const onClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {

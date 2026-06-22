@@ -3,6 +3,14 @@ export function formatTime(iso: string): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+export function formatDate(iso: string): string {
+  const d = new Date(iso)
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const year = d.getFullYear()
+  return `${day}.${month}.${year}`
+}
+
 export function formatDateLabel(iso: string): string {
   const d = new Date(iso)
   const today = new Date()
@@ -18,7 +26,10 @@ export function formatDateLabel(iso: string): string {
     d.getMonth() === yesterday.getMonth() &&
     d.getDate() === yesterday.getDate()
   if (isYesterday) return 'Yesterday'
-  return d.toLocaleDateString()
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const year = d.getFullYear()
+  return `${day}.${month}.${year}`
 }
 
 export function formatLastSeen(iso: string): string {

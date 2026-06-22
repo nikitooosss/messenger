@@ -7,7 +7,9 @@ export function RegisterPage() {
   const [uniqName, setUniqName] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [mismatchError, setMismatchError] = useState<string | null>(null)
+  const [serverError, setServerError] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const mutation = useMutation({
@@ -20,9 +22,9 @@ export function RegisterPage() {
     onSuccess: () => navigate({ to: '/login' }),
     onError: (e) => {
       if (e instanceof ApiError && e.status === 409) {
-        setError('A user with that username already exists')
+        setServerError('A user with that username already exists')
       } else {
-        setError('Registration failed. Please try again.')
+        setServerError('Registration failed. Please try again.')
       }
     },
   })
@@ -32,7 +34,12 @@ export function RegisterPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          setError(null)
+          setMismatchError(null)
+          setServerError(null)
+          if (password !== passwordConfirm) {
+            setMismatchError('Passwords do not match')
+            return
+          }
           mutation.mutate()
         }}
         className="w-full max-w-sm rounded-2xl bg-tg-panel p-8 shadow-lg"
@@ -62,10 +69,11 @@ export function RegisterPage() {
           />
         </label>
 
-        <label className="mb-4 block text-sm font-medium text-tg-text">
+        <label className="mb-3 block text-sm font-medium text-tg-text">
           Password
           <input
             type="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 outline-none focus:border-tg-accent"
@@ -73,7 +81,22 @@ export function RegisterPage() {
           />
         </label>
 
-        {error && <div className="mb-3 text-sm text-tg-danger">{error}</div>}
+        <label className="mb-1 block text-sm font-medium text-tg-text">
+          Confirm password
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            className="mt-1 block w-full rounded-lg border border-tg-border bg-tg-bg px-3 py-2 outline-none focus:border-tg-accent"
+            required
+          />
+        </label>
+        {mismatchError && (
+          <div className="mb-3 text-sm text-tg-danger">{mismatchError}</div>
+        )}
+
+        {serverError && <div className="mb-3 text-sm text-tg-danger">{serverError}</div>}
 
         <button
           type="submit"

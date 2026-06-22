@@ -2,7 +2,7 @@ import { useNavigate, useParams } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/apiClient'
 import { qk } from '../../lib/queryKeys'
-import { formatTime, formatLastSeen } from '../../lib/time'
+import { formatDate, formatLastSeen } from '../../lib/time'
 import { UserAvatar } from '../../components/UserAvatar'
 import { useOnline } from '../presence/useOnline'
 import { useCurrentUser } from '../../auth/useCurrentUser'
@@ -14,8 +14,11 @@ interface ChatListItemProps {
 
 export function ChatListItem({ chat }: ChatListItemProps) {
   const navigate = useNavigate()
-  const { chatId: activeId } = useParams({ strict: false }) as { chatId?: string }
-  const isActive = String(chat.id) === activeId
+  const { chatId: activeId } = useParams({ strict: false }) as {
+    chatId?: string | number
+  }
+  const isActive =
+    activeId !== undefined && String(chat.id) === String(activeId)
   const { data: me } = useCurrentUser()
 
   const { data: participants = [] } = useQuery<ChatParticipant[]>({
@@ -68,12 +71,27 @@ export function ChatListItem({ chat }: ChatListItemProps) {
   return (
     <button
       onClick={() => navigate({ to: '/chat/$chatId', params: { chatId: chat.id } })}
-      className={`flex w-full items-center gap-3 px-3 py-2 text-left transition ${
-        isActive ? 'bg-tg-accent/10' : 'hover:bg-tg-sidebarHover'
+      className={`relative flex w-full items-center gap-3 px-3 py-2 pl-4 text-left transition ${
+        isActive
+          ? 'bg-tg-accent text-white'
+          : 'hover:bg-tg-sidebarHover text-tg-text'
       }`}
     >
+  
+      {isActive && (
+        <span
+          aria-hidden
+          className="absolute left-0 top-0 h-full w-[3px] bg-white"
+        />
+      )}
       {chat.is_group ? (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tg-accent text-sm font-semibold text-white">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+            isActive
+              ? 'bg-white/20 text-white'
+              : 'bg-tg-accent text-white'
+          }`}
+        >
           {chat.name.charAt(0).toUpperCase()}
         </div>
       ) : (
@@ -81,20 +99,38 @@ export function ChatListItem({ chat }: ChatListItemProps) {
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate font-medium text-tg-text">{displayName}</span>
+          <span
+            className={`truncate font-medium ${
+              isActive ? 'text-white' : 'text-tg-text'
+            }`}
+          >
+            {displayName}
+          </span>
           {last && (
-            <span className="shrink-0 text-xs text-tg-mute">
-              {formatTime(last.created_at)}
+            <span
+              className={`shrink-0 text-xs ${
+                isActive ? 'text-white/70' : 'text-tg-mute'
+              }`}
+            >
+              {formatDate(last.created_at)}
             </span>
           )}
         </div>
-        <div className="truncate text-sm text-tg-mute">
+        <div
+          className={`truncate text-sm ${
+            isActive ? 'text-white/80' : 'text-tg-mute'
+          }`}
+        >
           {last ? (
             subtitle
           ) : chat.is_group ? (
             `${participants.length} members`
           ) : peerOnline ? (
-            <span className="text-tg-online">online</span>
+            <span
+              className={isActive ? 'text-white' : 'text-tg-online'}
+            >
+              online
+            </span>
           ) : peerUser ? (
             formatLastSeen(peerUser.last_seen)
           ) : (

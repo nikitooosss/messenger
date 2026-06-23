@@ -1,3 +1,5 @@
+import logging
+
 from typing import Annotated
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -27,6 +29,9 @@ from .schemas.events import (
 )
 from .schemas.registry import parse_event
 from .state_update import StateUpdater
+
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO)
 
 router_ws = APIRouter(
     prefix="/ws",
@@ -92,14 +97,11 @@ async def websocket_endpoint(
             data = await websocket.receive_json()
             try:
                 event = parse_event(data)
+
+                logger.info(f'EVENT WAS RECEIVE: {event}')
+
                 created_event = await ws_dispatcher.dispatch(
                     event=event, services=services, user_id=user_orm.id
-                )
-
-                await state_updater.update(
-                    event=created_event,
-                    ws_manager=ws_manager,
-                    user_id=user_orm.id,
                 )
 
                 recipients = event_router.route(
@@ -107,6 +109,12 @@ async def websocket_endpoint(
                 )
 
                 await ws_manager.broadcast(event=created_event, recipients=recipients)
+
+                await state_updater.update(
+                    event=created_event,
+                    ws_manager=ws_manager,
+                    user_id=user_orm.id,
+                )
             except Exception as inner_err:
                 await ws_manager.broadcast_error(
                     user_id=user_orm.id, message=str(inner_err)

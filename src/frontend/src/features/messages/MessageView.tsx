@@ -223,7 +223,7 @@ function MessageList({
 
     const showAuthor =
       isGroup &&
-      (!prev || prev.user_id !== m.user_id || isNewAuthorBreak(prev, m));
+      (!prev || prev.user_id !== m.user_id);
 
     const author = usersMap.get(m.user_id);
 
@@ -242,11 +242,4 @@ function MessageList({
   }
 
   return <>{items}</>;
-}
-
-function isNewAuthorBreak(a: Message, b: Message) {
-  return (
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime() >
-    5 * 60 * 1000
-  );
 }

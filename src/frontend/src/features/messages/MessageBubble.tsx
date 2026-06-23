@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useWebSocket } from '../../ws/WebSocketProvider'
 import { useCurrentUser } from '../../auth/useCurrentUser'
@@ -17,10 +17,12 @@ export function MessageBubble({ message, showAuthor, isOwn, isOptimistic, author
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(message.content)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [openUp, setOpenUp] = useState(false)
   const { send } = useWebSocket()
   const { data: me } = useCurrentUser()
   const qc = useQueryClient()
   const menuRef = useRef<HTMLDivElement>(null)
+  const menuDivRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!editing) {
@@ -37,6 +39,37 @@ export function MessageBubble({ message, showAuthor, isOwn, isOptimistic, author
     }
     window.addEventListener('mousedown', onClick)
     return () => window.removeEventListener('mousedown', onClick)
+  }, [menuOpen])
+
+  useLayoutEffect(() => {
+    if (!menuOpen) return
+    if (!menuRef.current || !menuDivRef.current) return
+    const wrapRect = menuRef.current.getBoundingClientRect()
+    const menuRect = menuDivRef.current.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - wrapRect.bottom
+    const spaceAbove = wrapRect.top
+    setOpenUp(spaceBelow < menuRect.height && spaceAbove > spaceBelow)
+  }, [menuOpen])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onScroll = (e: Event) => {
+      if (menuRef.current && e.target instanceof Node && menuRef.current.contains(e.target)) {
+        return
+      }
+      setMenuOpen(false)
+    }
+    window.addEventListener('scroll', onScroll, true)
+    return () => window.removeEventListener('scroll', onScroll, true)
+  }, [menuOpen])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [menuOpen])
 
   const submitEdit = () => {
@@ -122,10 +155,15 @@ export function MessageBubble({ message, showAuthor, isOwn, isOptimistic, author
               </div>
             </div>
           ) : (
-            <div className="whitespace-pre-wrap break-words">{message.content}</div>
+            <div className="whitespace-pre-wrap break-all">{message.content}</div>
           )}
           {isOwn && !editing && me && (
-            <div className="absolute -left-1 top-1/2 -translate-x-full -translate-y-1/2 opacity-0 transition group-hover:opacity-100" ref={menuRef}>
+            <div
+              className={`absolute -left-1 top-1/2 -translate-x-full -translate-y-1/2 transition ${
+                menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}
+              ref={menuRef}
+            >
               <button
                 onClick={() => setMenuOpen((v) => !v)}
                 className="flex h-6 w-6 items-center justify-center rounded-full bg-tg-sidebar text-tg-mute hover:bg-tg-sidebarHover hover:text-tg-text"
@@ -134,7 +172,12 @@ export function MessageBubble({ message, showAuthor, isOwn, isOptimistic, author
                 ⋯
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-1 w-32 rounded-lg border border-tg-border bg-tg-panel py-1 text-sm shadow-lg">
+                <div
+                  ref={menuDivRef}
+                  className={`absolute right-0 w-32 rounded-lg border border-tg-border bg-tg-panel py-1 text-sm shadow-lg ${
+                    openUp ? 'bottom-full mb-1' : 'top-full mt-1'
+                  }`}
+                >
                   <button
                     onClick={() => {
                       setEditing(true)

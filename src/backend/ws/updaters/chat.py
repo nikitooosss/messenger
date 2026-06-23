@@ -13,7 +13,7 @@ class ChatCreateStateUpdater:
 
 
 class ChatDeleteStateUpdater:
-    async def update(self, event, ws_manager: WSManager):
+    async def update(self, event, ws_manager: WSManager, user_id: int | None = None):
         ws_manager.rooms.pop(event.chat.id, None)
 
         for p in event.participants:

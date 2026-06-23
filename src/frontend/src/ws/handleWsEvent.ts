@@ -1,6 +1,11 @@
 import { QueryClient } from '@tanstack/react-query'
 import { qk } from '../lib/queryKeys'
-import { notifyChatCreated, notifyParticipantCreated } from '../lib/wsWait'
+import {
+  notifyChatCreated,
+  notifyParticipantCreated,
+  notifyParticipantDeleted,
+  rejectPendingParticipantDeleted,
+} from '../lib/wsWait'
 import { seedOnlineFromRoster } from '../features/presence/useOnline'
 import type { Chat, ChatParticipant, Message, User } from '../types/models'
 import type { ServerEvent } from '../types/wsEvents'
@@ -79,14 +84,29 @@ export function handleWsEvent(ev: ServerEvent, qc: QueryClient): void {
     }
 
     case 'chat_participant_created': {
+      const cp = ev.chat_participant
+      const me = qc.getQueryData<{ id: number }>(qk.me)
+
       qc.setQueryData<ChatParticipant[]>(
-        qk.participants(ev.chat_participant.chat_id),
+        qk.participants(cp.chat_id),
         (old = []) =>
-          old.some((p) => p.id === ev.chat_participant.id)
-            ? old
-            : [...old, ev.chat_participant],
+          old.some((p) => p.id === cp.id) ? old : [...old, cp],
       )
-      notifyParticipantCreated(ev.chat_participant)
+
+      if (me && cp.user_id === me.id) {
+        const chat: Chat = {
+          id: ev.chat.id,
+          name: ev.chat.name,
+          is_group: ev.chat.is_group,
+          created_at: ev.chat.created_at,
+        }
+        qc.setQueryData<Chat[]>(qk.chats(), (old = []) =>
+          old.some((c) => c.id === chat.id) ? old : [chat, ...old],
+        )
+        qc.setQueryData<Chat>(qk.chat(chat.id), chat)
+      }
+
+      notifyParticipantCreated(cp)
       break
     }
 
@@ -100,10 +120,24 @@ export function handleWsEvent(ev: ServerEvent, qc: QueryClient): void {
     }
 
     case 'chat_participant_deleted': {
+      const cp = ev.chat_participant
+      notifyParticipantDeleted(cp)
+      const me = qc.getQueryData<{ id: number }>(qk.me)
+
       qc.setQueryData<ChatParticipant[]>(
-        qk.participants(ev.chat_participant.chat_id),
-        (old = []) => old.filter((p) => p.id !== ev.chat_participant.id),
+        qk.participants(cp.chat_id),
+        (old = []) => old.filter((p) => p.id !== cp.id),
       )
+
+      if (me && cp.user_id === me.id) {
+        qc.setQueryData<Chat[]>(qk.chats(), (old = []) =>
+          old.filter((c) => c.id !== cp.chat_id),
+        )
+        qc.invalidateQueries({ queryKey: qk.chats() })
+        qc.removeQueries({ queryKey: qk.chat(cp.chat_id) })
+        qc.removeQueries({ queryKey: qk.messages(cp.chat_id) })
+        qc.removeQueries({ queryKey: qk.participants(cp.chat_id) })
+      }
       break
     }
 
@@ -129,6 +163,7 @@ export function handleWsEvent(ev: ServerEvent, qc: QueryClient): void {
 
     case 'error':
       console.error('[WS server error]', ev.message)
+      rejectPendingParticipantDeleted(ev.message)
       break
   }
 }

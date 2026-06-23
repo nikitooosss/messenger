@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../../lib/apiClient'
 import { qk } from '../../lib/queryKeys'
 import { useWebSocket } from '../../ws/WebSocketProvider'
+import { waitForNextParticipantDeleted } from '../../lib/wsWait'
 import { UserAvatar } from '../../components/UserAvatar'
 import { useOnline } from '../presence/useOnline'
 import { formatLastSeen } from '../../lib/time'
@@ -19,26 +19,30 @@ export function ParticipantList({ chatId, participants, users, meId }: Props) {
   const { send } = useWebSocket()
 
   const remove = useMutation({
-    mutationFn: (id: number) => api.removeParticipant(id),
+    mutationFn: async (id: number) => {
+      const removed = participants.find((p) => p.id === id)
+      if (!removed) {
+        throw new Error('Participant not found in rendered list')
+      }
+      const wait = waitForNextParticipantDeleted(
+        (p) => p.id === removed.id && p.chat_id === removed.chat_id,
+      )
+      send({
+        type: 'chat_participant_delete',
+        chat_participant: removed,
+      })
+      return wait
+    },
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: qk.participants(chatId) })
       const previous = qc.getQueryData<ChatParticipant[]>(qk.participants(chatId))
-      const removed = previous?.find((p) => p.id === id)
       qc.setQueryData<ChatParticipant[]>(qk.participants(chatId), (old = []) =>
         old.filter((p) => p.id !== id),
       )
-      return { previous, removed }
+      return { previous }
     },
     onError: (_e, _id, ctx) => {
       if (ctx?.previous) qc.setQueryData(qk.participants(chatId), ctx.previous)
-    },
-    onSettled: (_data, _err, _id, ctx) => {
-      if (ctx?.removed) {
-        send({
-          type: 'chat_participant_delete',
-          chat_participant: ctx.removed,
-        })
-      }
     },
   })
 

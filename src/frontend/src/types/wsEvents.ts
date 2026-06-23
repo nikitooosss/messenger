@@ -59,7 +59,7 @@ export type ServerEvent =
   | { type: 'chat_created'; chat: ChatDetails; participants: ChatParticipant[] }
   | { type: 'chat_updated'; chat: Chat }
   | { type: 'chat_deleted'; chat: { id: number }; participants: ChatParticipant[] }
-  | { type: 'chat_participant_created'; chat_participant: ChatParticipant }
+  | { type: 'chat_participant_created'; chat_participant: ChatParticipant; chat: Chat }
   | { type: 'chat_participant_updated'; chat_participant: ChatParticipant }
   | { type: 'chat_participant_deleted'; chat_participant: { id: number; chat_id: number; user_id: number } }
   | { type: 'user_online'; user: User }

@@ -1,4 +1,7 @@
+import logging
+
 from backend.services.core.services_container import ServicesContainer
+from backend.services.schemas.chat import ChatGet
 from backend.services.schemas.chat_participant import (
     ChatParticipantDelete,
     ChatParticipantGet,
@@ -15,6 +18,9 @@ from ..schemas.events import (
     ChatParticipantUpdatedEvent,
     TypeEvent,
 )
+
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO)
 
 
 class ChatParticipantCreateHandler:
@@ -33,9 +39,13 @@ class ChatParticipantCreateHandler:
 
         participant = ChatParticipantGet.model_validate(participant_orm)
 
+        chat_orm = await services.chat_service.get_chat_by_id(chat_id=participant.chat_id)
+        chat = ChatGet.model_validate(chat_orm)
+
         return ChatParticipantCreatedEvent(
             type=TypeEvent.chat_participant_created,
             chat_participant=participant,
+            chat=chat,
         )
 
 
@@ -77,6 +87,8 @@ class ChatParticipantDeleteHandler:
         await services.chat_participant_service.delete_participant(
             chat_participant_id=chat_participant_id
         )
+
+        logger.info(f'PARTICIPANT {user_id} WAS DELETED FROM CHAT {chat_id}')
 
         participant_deleted = ChatParticipantDelete(
             id=chat_participant_id, chat_id=chat_id, user_id=user_id

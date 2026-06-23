@@ -138,6 +138,7 @@ class ChatParticipantCreateEvent(BaseEvent):
 class ChatParticipantCreatedEvent(BaseEvent):
     type: TypeEvent = TypeEvent.chat_participant_created
     chat_participant: ChatParticipantGet
+    chat: ChatGet
 
 
 class ChatParticipantUpdateEvent(BaseEvent):

@@ -60,10 +60,11 @@ class MessageDeleteHandler:
         user_id: int,
     ):
         message_id = event.message.id
+        chat_id = event.message.chat_id
 
         await services.message_service.delete_message(message_id=message_id)
 
-        message_deleted = MessageDelete(id=message_id)
+        message_deleted = MessageDelete(id=message_id, chat_id=chat_id)
 
         return MessageDeletedEvent(
             type=TypeEvent.message_deleted, message=message_deleted

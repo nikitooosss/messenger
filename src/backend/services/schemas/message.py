@@ -35,6 +35,7 @@ class MessagePatch(BaseModel):
 
 class MessageDelete(BaseModel):
     id: int
+    chat_id: int
 
     class Config:
         from_attributes = True

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "../../lib/apiClient";
@@ -40,17 +41,27 @@ export function MessageView({ chatId }: MessageViewProps) {
     queryFn: () => api.participants(chatId),
   });
 
-  const { data: chats = [] } = useQuery({
+  const chatsQuery = useQuery({
     queryKey: qk.chats(),
     queryFn: () => api.chats(me!.id),
     enabled: !!me,
   });
+  const chats = chatsQuery.data ?? [];
 
   const [infoOpen, setInfoOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const chat = chats.find((c) => c.id === chatId);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (chatsQuery.isLoading) return;
+    if (chat === undefined) {
+      navigate({ to: "/" });
+    }
+  }, [chat, chatsQuery.isLoading, navigate]);
 
   const sortedMessages = useMemo(
     () =>

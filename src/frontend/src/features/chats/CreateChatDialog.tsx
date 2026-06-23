@@ -1,13 +1,15 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { api } from '../../lib/apiClient'
 import { qk } from '../../lib/queryKeys'
 import { useCreateChat } from './useCreateChat'
+import { useChats } from './useChats'
 import { useCurrentUser } from '../../auth/useCurrentUser'
 import { Dialog } from '../../components/Dialog'
 import { Button } from '../../components/Button'
 import { UserAvatar } from '../../components/UserAvatar'
+import type { ChatParticipant } from '../../types/models'
 
 interface Props {
   open: boolean
@@ -21,11 +23,42 @@ export function CreateChatDialog({ open, onClose }: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const { data: me } = useCurrentUser()
   const { data: users = [] } = useQuery({ queryKey: qk.users, queryFn: api.users, enabled: open })
+  const { data: chats = [] } = useChats(me?.id)
   const createChat = useCreateChat()
 
   const others = users.filter((u) => u.id !== me?.id)
+
+  const personalPeerIds = (() => {
+    const ids = new Set<number>()
+    if (!me) return ids
+    for (const c of chats) {
+      if (c.is_group) continue
+      const parts = qc.getQueryData<ChatParticipant[]>(qk.participants(c.id))
+      if (!parts) continue
+      const peer = parts.find((p) => p.user_id !== me.id)
+      if (peer) ids.add(peer.user_id)
+    }
+    return ids
+  })()
+
+  useEffect(() => {
+    if (!open || !me) return
+    for (const c of chats) {
+      if (c.is_group) continue
+      if (qc.getQueryData(qk.participants(c.id))) continue
+      qc.prefetchQuery({
+        queryKey: qk.participants(c.id),
+        queryFn: () => api.participants(c.id),
+      })
+    }
+  }, [open, me, chats, qc])
+
+  const visibleOthers = chatType === 'personal'
+    ? others.filter((u) => !personalPeerIds.has(u.id))
+    : others
 
   const reset = () => {
     setStep('type')
@@ -162,10 +195,14 @@ export function CreateChatDialog({ open, onClose }: Props) {
             {chatType === 'personal' ? 'Select user' : 'Select members'}
           </div>
           <div className="max-h-64 overflow-y-auto rounded-lg border border-tg-border">
-            {others.length === 0 && (
-              <div className="px-3 py-2 text-sm text-tg-mute">No other users yet.</div>
+            {visibleOthers.length === 0 && (
+              <div className="px-3 py-2 text-sm text-tg-mute">
+                {chatType === 'personal'
+                  ? 'No available users for a new personal chat.'
+                  : 'No other users yet.'}
+              </div>
             )}
-            {others.map((u) => (
+            {visibleOthers.map((u) => (
               <label
                 key={u.id}
                 className={`flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-tg-sidebar ${
